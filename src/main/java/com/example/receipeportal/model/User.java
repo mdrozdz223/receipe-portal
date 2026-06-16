@@ -1,6 +1,8 @@
 package com.example.receipeportal.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "users")
@@ -10,9 +12,13 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Login nie może być pusty")
+    @Size(min = 3, message = "Login musi mieć co najmniej 3 znaki")
     @Column(unique = true, nullable = false)
     private String username;
 
+    @NotBlank(message = "Hasło jest wymagane")
+    @Size(min = 6, message = "Hasło musi mieć co najmniej 6 znaków")
     @Column(nullable = false)
     private String password;
 

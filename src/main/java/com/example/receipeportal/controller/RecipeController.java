@@ -4,7 +4,10 @@ import com.example.receipeportal.model.Recipe;
 import com.example.receipeportal.repository.RecipeRepository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin;
-
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -19,11 +22,23 @@ public class RecipeController {
     }
 
     @GetMapping
-    public List<Recipe> getAllRecipes(@RequestParam(required = false) String search) {
+    public Page<Recipe> getAllRecipes(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
         if (search != null && !search.trim().isEmpty()) {
-            return recipeRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrIngredientsContainingIgnoreCase(search, search, search);
+            return recipeRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrIngredientsContainingIgnoreCase(search, search, search, pageable);
         }
-        return recipeRepository.findAll();
+        return recipeRepository.findAll(pageable);
+    }
+    @GetMapping("/{id}")
+    public org.springframework.http.ResponseEntity<Recipe> getRecipeById(@PathVariable Long id) {
+        return recipeRepository.findById(id)
+                .map(org.springframework.http.ResponseEntity::ok)
+                .orElse(org.springframework.http.ResponseEntity.notFound().build());
     }
 
     @PostMapping

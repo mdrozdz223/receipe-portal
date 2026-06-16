@@ -245,3 +245,43 @@ a { text-decoration: none; color: inherit; }
 .recipe-desc { color: #636e72; font-style: italic; margin-bottom: 1rem; }
 .recipe-section h4 { color: #ff6b6b; margin: 1rem 0 0.2rem 0; font-size: 0.9rem; text-transform: uppercase; }
 .recipe-section p { font-size: 0.95rem; white-space: pre-wrap; }
+
+.truncate {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clickable-card {
+  cursor: pointer;
+}
+.clickable-card:hover {
+  border: 1px solid #ff6b6b;
+}
+
+
+.hidden-file-input {
+  display: none;
+}
+
+.custom-file-upload {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  cursor: pointer;
+  background-color: #ffffff;
+  color: #ff6b6b;
+  border: 2px solid #ff6b6b;
+  border-radius: 25px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.custom-file-upload:hover {
+  background-color: #ff6b6b;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(255, 107, 107, 0.2);
+}
