@@ -228,21 +228,92 @@ function AddRecipe({ user }) {
 
 function AdminPanel({ user, getAuthHeaders }) {
     const [usersList, setUsersList] = useState([]);
+
+    const [newUser, setNewUser] = useState({ username: '', password: '', role: 'ROLE_USER' });
     const navigate = useNavigate();
 
     useEffect(() => { if (!user || user.role !== 'ROLE_ADMIN') { navigate('/'); } else { fetchUsers(); } }, [user, navigate]);
 
-    const fetchUsers = () => { fetch('http://localhost:8081/api/users', { headers: getAuthHeaders() }).then(res => res.json()).then(data => setUsersList(data)); };
-    const handleDelete = (id) => { if(window.confirm("Usunąć?")) { fetch(`http://localhost:8081/api/users/${id}`, { method: 'DELETE', headers: getAuthHeaders() }).then(res => { if(res.ok) fetchUsers(); }); } };
+    const fetchUsers = () => {
+        fetch('http://localhost:8081/api/users', { headers: getAuthHeaders() })
+            .then(res => res.json())
+            .then(data => setUsersList(data));
+    };
+
+    const handleAddUser = (e) => {
+        e.preventDefault();
+        fetch('http://localhost:8081/api/users', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(newUser)
+        }).then(res => {
+            if (res.ok) {
+                alert("Dodano użytkownika!");
+                setNewUser({ username: '', password: '', role: 'ROLE_USER' });
+                fetchUsers();
+            } else {
+                alert("Błąd! Login zajęty lub dane nie spełniają wymogów (np. za krótkie hasło).");
+            }
+        });
+    };
+
+    const handleDelete = (id) => {
+        if(window.confirm("Usunąć użytkownika?")) {
+            fetch(`http://localhost:8081/api/users/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
+                .then(res => { if(res.ok) fetchUsers(); });
+        }
+    };
 
     if (!user || user.role !== 'ROLE_ADMIN') return null;
 
     return (
         <div className="form-container" style={{ maxWidth: '800px' }}>
             <h2>Zarządzanie Użytkownikami</h2>
+
+            {}
+            <div style={{ background: '#f9f9f9', padding: '1.5rem', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '2rem' }}>
+                <h3 style={{ marginTop: 0, color: '#ff6b6b', marginBottom: '1rem' }}>➕ Dodaj nowego użytkownika</h3>
+                <form onSubmit={handleAddUser} style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+
+                    <input type="text" placeholder="Login (min. 3 znaki)" value={newUser.username}
+                           onChange={e => setNewUser({...newUser, username: e.target.value})}
+                           required style={{ padding: '0.8rem', flex: 1, border: '1px solid #ddd', borderRadius: '5px' }} />
+
+                    <input type="password" placeholder="Hasło (min. 6 znaków)" value={newUser.password}
+                           onChange={e => setNewUser({...newUser, password: e.target.value})}
+                           required style={{ padding: '0.8rem', flex: 1, border: '1px solid #ddd', borderRadius: '5px' }} />
+
+                    <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})}
+                            style={{ padding: '0.8rem', flex: 1, border: '1px solid #ddd', borderRadius: '5px' }}>
+                        <option value="ROLE_USER">Użytkownik</option>
+                        <option value="ROLE_ADMIN">Administrator</option>
+                    </select>
+
+                    <button type="submit" className="submit-btn" style={{ flex: 'none', width: 'auto', padding: '0.8rem 1.5rem', marginTop: 0 }}>Dodaj</button>
+                </form>
+            </div>
+
+            {}
             <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', marginTop: '1rem' }}>
-                <thead><tr style={{ borderBottom: '2px solid #ddd' }}><th style={{ padding: '10px' }}>ID</th><th>Login</th><th>Rola</th><th>Akcja</th></tr></thead>
-                <tbody>{usersList.map(u => (<tr key={u.id} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px' }}>{u.id}</td><td><strong>{u.username}</strong></td><td>{u.role}</td><td>{u.username !== user.username && (<button onClick={() => handleDelete(u.id)} style={{ background: '#ff6b6b', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}>Usuń</button>)}</td></tr>))}</tbody>
+                <thead>
+                <tr style={{ borderBottom: '2px solid #ddd' }}>
+                    <th style={{ padding: '10px' }}>ID</th><th>Login</th><th>Rola</th><th>Akcja</th>
+                </tr>
+                </thead>
+                <tbody>
+                {usersList.map(u => (
+                    <tr key={u.id} style={{ borderBottom: '1px solid #eee' }}>
+                        <td style={{ padding: '10px' }}>{u.id}</td>
+                        <td><strong>{u.username}</strong></td>
+                        <td>{u.role}</td>
+                        <td>
+                            {u.username !== user.username && (
+                                <button onClick={() => handleDelete(u.id)} style={{ background: '#ff6b6b', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}>Usuń</button>
+                            )}
+                        </td>
+                    </tr>
+                ))}
+                </tbody>
             </table>
         </div>
     );
