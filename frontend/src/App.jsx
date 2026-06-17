@@ -16,7 +16,7 @@ function App() {
     return (
         <BrowserRouter>
             <nav className="navbar">
-                <div className="navbar-brand">🍽️ SmacznyPortal</div>
+                <div className="navbar-brand">🍽️ ZjedzMnie</div>
                 <div className="navbar-links">
                     <Link to="/" className="nav-link">Przeglądaj Przepisy</Link>
                     {user ? (
@@ -39,8 +39,8 @@ function App() {
                     <Route path="/login" element={<Auth user={user} setUser={setUser} />} />
                     <Route path="/add" element={<AddRecipe user={user} />} />
                     <Route path="/admin" element={<AdminPanel user={user} getAuthHeaders={getAuthHeaders} />} />
-                    <Route path="/recipe/:id" element={<RecipeDetails />} />
-                </Routes>
+                    <Route path="/recipe/:id" element={<RecipeDetails user={user} />} />
+                    <Route path="/edit/:id" element={<EditRecipe user={user} />} />                </Routes>
             </div>
         </BrowserRouter>
     );
@@ -73,7 +73,7 @@ function Home() {
                     <div className="recipe-grid">
                         {recipes.map(r => (
                             <div key={r.id} className="recipe-card clickable-card" onClick={() => navigate(`/recipe/${r.id}`)}>
-                                {/* Rysowanie zdjęcia na liście, jeśli przepis je posiada */}
+                                {}
                                 {r.image && <img src={r.image} alt="Zdjęcie przepisu" style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px 8px 0 0', marginBottom: '1rem' }} />}
                                 <h2>{r.title}</h2>
                                 <p className="recipe-desc truncate">{r.description}</p>
@@ -94,7 +94,7 @@ function Home() {
     );
 }
 
-function RecipeDetails() {
+function RecipeDetails({user}) {
     const { id } = useParams();
     const [recipe, setRecipe] = useState(null);
     const navigate = useNavigate();
@@ -109,9 +109,20 @@ function RecipeDetails() {
 
     return (
         <div className="form-container" style={{ maxWidth: '800px', marginTop: '2rem' }}>
-            <button onClick={() => navigate(-1)} style={{ marginBottom: '1.5rem', background: 'none', border: 'none', color: '#ff6b6b', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem' }}>← Wróć</button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                        <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: '#ff6b6b', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem' }}>
+                            ← Wróć
+                        </button>
 
-            {}
+                        {}
+                        {user && user.role === 'ROLE_ADMIN' && (
+                            <button
+                                onClick={() => navigate(`/edit/${id}`)}
+                                style={{ background: '#3498db', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                ✏️ Edytuj przepis
+                            </button>
+                        )}
+                    </div>
             {recipe.image && <img src={recipe.image} alt="Zdjęcie przepisu" style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '8px', marginBottom: '1.5rem' }} />}
 
             <h1 style={{ color: '#333', fontSize: '2.5rem', marginBottom: '0.5rem' }}>{recipe.title}</h1>
@@ -317,6 +328,48 @@ function AdminPanel({ user, getAuthHeaders }) {
             </table>
         </div>
     );
+}
+function EditRecipe({ user }) {
+  const { id } = useParams();
+  const [recipe, setRecipe] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user || user.role !== 'ROLE_ADMIN') {
+        alert("Brak dostępu!");
+        navigate('/');
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    fetch(`http://localhost:8081/api/recipes/${id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setRecipe(data));
+  }, [id]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    fetch(`http://localhost:8081/api/recipes/${id}`, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Basic ' + btoa(user.username + ':' + user.password), 'Content-Type': 'application/json' },
+      body: JSON.stringify(recipe)
+    }).then(res => { if(res.ok) { alert("Zaktualizowano!"); navigate(`/recipe/${id}`); } });
+  };
+
+  if (!recipe) return <p>Ładowanie...</p>;
+
+  return (
+    <div className="form-container">
+      <h2>Edytuj: {recipe.title}</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group"><input value={recipe.title} onChange={e => setRecipe({...recipe, title: e.target.value})} required /></div>
+        <div className="form-group"><input value={recipe.description} onChange={e => setRecipe({...recipe, description: e.target.value})} required /></div>
+        <div className="form-group"><textarea value={recipe.ingredients} onChange={e => setRecipe({...recipe, ingredients: e.target.value})} required /></div>
+        <div className="form-group"><textarea value={recipe.instructions} onChange={e => setRecipe({...recipe, instructions: e.target.value})} required /></div>
+        <button type="submit" className="submit-btn">Zapisz zmiany</button>
+      </form>
+    </div>
+  );
 }
 
 export default App;

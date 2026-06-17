@@ -2,6 +2,7 @@ package com.example.receipeportal.controller;
 
 import com.example.receipeportal.model.Recipe;
 import com.example.receipeportal.repository.RecipeRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import jakarta.validation.Valid;
@@ -41,8 +42,19 @@ public class RecipeController {
                 .orElse(org.springframework.http.ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Recipe> updateRecipe(@PathVariable Long id, @Valid @RequestBody Recipe recipeDetails) {
+        return recipeRepository.findById(id).map(recipe -> {
+            recipe.setTitle(recipeDetails.getTitle());
+            recipe.setDescription(recipeDetails.getDescription());
+            recipe.setIngredients(recipeDetails.getIngredients());
+            recipe.setInstructions(recipeDetails.getInstructions());
+            recipe.setImage(recipeDetails.getImage());
+            return ResponseEntity.ok(recipeRepository.save(recipe));
+        }).orElse(ResponseEntity.notFound().build());
+    }
     @PostMapping
-    public Recipe createRecipe(@RequestBody Recipe recipe) {
+    public Recipe createRecipe(@Valid @RequestBody Recipe recipe) {
         return recipeRepository.save(recipe);
     }
 }
